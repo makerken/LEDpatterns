@@ -1,6 +1,8 @@
 # LED strip patterns  
 A THREE.js visualizer for LED strip patterns  
 
+![image of current build](./demo.png)
+
 Right now it can take about 3 seconds to show 30 leds, this does not scale linerarly [TODO find big O speed]  
 
 clone this repo, nav to dir      
