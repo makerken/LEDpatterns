@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js LED patterns</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body { margin: 0; }
+            canvas { width: 100%; height: 100%; }
+        </style>
+
+	</head>
+	<body>
+        
+		<script type="module">
+
+            import * as THREE from './node_modules/three/build/three.module.js';
+			import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js';
+            import { GUI } from './node_modules/three/examples/jsm/libs/dat.gui.module.js';
+
+            var camera, scene, controls, renderer;
+            var geometry, material, mesh;
+
+            init();
+            animate();
+
+            function init() {
+
+                scene = new THREE.Scene();
+
+                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 10000 );
+                camera.position.set( 0, 10, 40 );
+
+
+                geometry = new THREE.BoxGeometry( 5, 5, 20 );
+                // https://threejs.org/docs/#api/en/materials/MeshStandardMaterial
+                material = new THREE.MeshStandardMaterial( { 
+                    color: 0xffffff, 
+                    roughness: 0, 
+                    metalness: 0
+                } );
+
+                mesh = new THREE.Mesh( geometry, material );
+                scene.add( mesh );
+
+                var ambient = new THREE.AmbientLight( 0xffffff, 0.6 );
+                scene.add( ambient );
+                
+                scene.add( ledStrip( { number: 20, perMeter: 60 } ) );
+
+                renderer = new THREE.WebGLRenderer( { antialias: true } );
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                document.body.appendChild( renderer.domElement );
+
+                controls = new OrbitControls( camera, renderer.domElement );
+                controls.autoRotate = true;
+
+                var gui = new GUI();
+
+                gui.add(controls, 'autoRotate').name('rotate');
+
+                var patternFolder = gui.addFolder('Pattern');
+
+                patternFolder.addColor( {'LED color': 0xFFFFFF }, 'LED color' ).onChange( function ( value ) {
+
+                    for( var i = 0; i < scene.getObjectByName("leds").children.length; i++ ) {
+
+                        scene.getObjectByName("leds").children[i].color.setHex( value );
+                        scene.getObjectByName("leds").children[i].children[0].update();
+
+                    }
+
+                } );
+
+                patternFolder.open();
+
+
+            }
+
+            function animate() {
+
+                requestAnimationFrame( animate ); 
+                
+                // required if controls.enableDamping or controls.autoRotate are set to true
+                controls.update(); 
+                
+                renderer.render( scene, camera );
+
+            }
+
+            // returns a strip of LEDs matching the number and transformed by the per meter on a ribbon
+            function ledStrip( { number: num, perMeter: numM } ) {
+
+                var strip = new THREE.Group();
+                strip.name = "leds";
+
+                for( var i = 0; i < num; i++ ) {
+
+                    // RectAreaLight( color : Integer, intensity : Float, width : Float, height : Float )
+                    var led = new THREE.RectAreaLight( 0xffffff, 10, 1, 1 );
+                    led.position.set( -6, 2, (-i*2)+20 );
+                    led.rotation.y = -Math.PI/2;
+
+                    var ledHelper = new THREE.RectAreaLightHelper( led );
+                    led.add( ledHelper );
+
+                    strip.add( led );
+
+                }
+
+                strip.rotation.z = 1;
+
+                return strip
+
+            }
+
+        </script>
+        
+	</body>
+</html>
